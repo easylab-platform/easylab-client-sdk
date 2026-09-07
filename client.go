@@ -1,10 +1,14 @@
 // Package easylabsdk provides a strong-typed client for the EasyLab service.
 //
-// EasyLab exposes three Connect services (LabService, OpsService,
-// RegistryService) generated from easylab/v1/easylab.proto by buf. This SDK
-// adds Bearer auth + ergonomic wrappers so ext servers (and any consumer)
-// never hard-code REST paths. It only talks to easylab; it does NOT talk to
-// the agent (use the separate abc agent SDK for that).
+// EasyLab exposes the easylab gateway Connect surface. It bundles four
+// generated clients — LabService, OpsService, RegistryService (easylab.v1,
+// from easylab/v1/easylab.proto) and AgentService (agent.v1, forwarded through
+// the gateway). ALL of them dial the SAME baseUrl (the easylab gateway); the
+// agent surface is the gateway's /agent.v1.* forward, NOT a direct agent call.
+// For direct-to-agent use (ext servers), see github.com/abcp-sdk/agent-sdk.
+//
+// This SDK adds Bearer auth + ergonomic wrappers so any consumer never
+// hard-codes REST paths.
 package easylabsdk
 
 import (
@@ -17,6 +21,7 @@ import (
 	"connectrpc.com/connect"
 
 	easylabv1 "github.com/easylab-platform/easylab-proto/easylab/v1"
+	agentv1connect "github.com/abcp-sdk/agent-proto/agent/v1/agentv1connect"
 	"github.com/easylab-platform/easylab-proto/easylab/v1/easylabv1connect"
 )
 
@@ -26,6 +31,7 @@ type Client struct {
 	Lab      easylabv1connect.LabServiceClient
 	Ops      easylabv1connect.OpsServiceClient
 	Registry easylabv1connect.RegistryServiceClient
+	Agent    agentv1connect.AgentServiceClient // easylab gateway's /agent.v1 forward
 }
 
 // New builds an easylab client. token, when non-empty, is sent as Bearer.
@@ -41,6 +47,7 @@ func New(baseURL, token string) *Client {
 		Lab:      easylabv1connect.NewLabServiceClient(http.DefaultClient, base, connect.WithInterceptors(inter)),
 		Ops:      easylabv1connect.NewOpsServiceClient(http.DefaultClient, base, connect.WithInterceptors(inter)),
 		Registry: easylabv1connect.NewRegistryServiceClient(http.DefaultClient, base, connect.WithInterceptors(inter)),
+		Agent:    agentv1connect.NewAgentServiceClient(http.DefaultClient, base, connect.WithInterceptors(inter)),
 	}
 }
 
