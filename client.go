@@ -212,15 +212,6 @@ func (c *Client) Build(ctx context.Context, req *easylabv1.BuildRequest) (string
 	return res.Msg.GetTaskId(), nil
 }
 
-// Run triggers a package publish run, returning the task id.
-func (c *Client) Run(ctx context.Context, req *easylabv1.RunRequest) (string, error) {
-	res, err := c.Ops.Run(ctx, connect.NewRequest(req))
-	if err != nil {
-		return "", errDownstream("easylab", err)
-	}
-	return res.Msg.GetTaskId(), nil
-}
-
 // ListServices lists services/deployments.
 func (c *Client) ListServices(ctx context.Context, org, repo, namespace string) ([]*easylabv1.ServiceInfo, error) {
 	res, err := c.Ops.ListServices(ctx, connect.NewRequest(&easylabv1.ListServicesRequest{Org: org, Repo: repo, Namespace: namespace}))
