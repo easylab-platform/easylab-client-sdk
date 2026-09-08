@@ -20,8 +20,8 @@ import (
 
 	"connectrpc.com/connect"
 
-	easylabv1 "github.com/easylab-platform/easylab-proto/easylab/v1"
 	agentv1connect "github.com/abcp-sdk/agent-proto/agent/v1/agentv1connect"
+	easylabv1 "github.com/easylab-platform/easylab-proto/easylab/v1"
 	"github.com/easylab-platform/easylab-proto/easylab/v1/easylabv1connect"
 )
 
@@ -34,20 +34,47 @@ type Client struct {
 	Agent    agentv1connect.AgentServiceClient // easylab gateway's /agent.v1 forward
 }
 
+// Option customizes the client.
+type Option func(*clientOptions)
+
+type clientOptions struct {
+	httpClient *http.Client
+}
+
+// WithHTTPClient overrides the underlying HTTP client (e.g. TLS config,
+// timeouts, proxy-aware transport, or an h2c client for an HTTP/2-only
+// endpoint).
+func WithHTTPClient(client *http.Client) Option {
+	return func(o *clientOptions) {
+		if client != nil {
+			o.httpClient = client
+		}
+	}
+}
+
 // New builds an easylab client. token, when non-empty, is sent as Bearer.
 // baseURL is protocol+host (no trailing slash).
-func New(baseURL, token string) *Client {
+//
+// The gateway speaks HTTP/1.1 over plain http:// (and TLS h1/h2 behind the
+// ingress), so the default http.DefaultClient fits; pass WithHTTPClient to
+// override. For DIRECT h2c calls to the agent backend use
+// github.com/abcp-sdk/agent-sdk instead.
+func New(baseURL, token string, opts ...Option) *Client {
 	if token == "" {
 		token = "devtoken"
+	}
+	o := clientOptions{httpClient: http.DefaultClient}
+	for _, opt := range opts {
+		opt(&o)
 	}
 	inter := authInterceptor(token)
 	base := trimSlash(baseURL)
 	return &Client{
 		base:     base,
-		Lab:      easylabv1connect.NewLabServiceClient(http.DefaultClient, base, connect.WithInterceptors(inter)),
-		Ops:      easylabv1connect.NewOpsServiceClient(http.DefaultClient, base, connect.WithInterceptors(inter)),
-		Registry: easylabv1connect.NewRegistryServiceClient(http.DefaultClient, base, connect.WithInterceptors(inter)),
-		Agent:    agentv1connect.NewAgentServiceClient(http.DefaultClient, base, connect.WithInterceptors(inter)),
+		Lab:      easylabv1connect.NewLabServiceClient(o.httpClient, base, connect.WithInterceptors(inter)),
+		Ops:      easylabv1connect.NewOpsServiceClient(o.httpClient, base, connect.WithInterceptors(inter)),
+		Registry: easylabv1connect.NewRegistryServiceClient(o.httpClient, base, connect.WithInterceptors(inter)),
+		Agent:    agentv1connect.NewAgentServiceClient(o.httpClient, base, connect.WithInterceptors(inter)),
 	}
 }
 
@@ -443,14 +470,14 @@ func (c *Client) Sync(ctx context.Context, name, org, repo, rev, dest string, fo
 
 // LaunchServiceSpec is the full service launch request (mirrors the proto).
 type LaunchServiceSpec struct {
-	Name, Image, Kind, Command                string
-	Ports                                     []*easylabv1.PortSpec
-	Env                                       map[string]string
-	Replicas                                  int32
-	Group, Network, Namespace, CPUs           string
-	MemoryBytes                               uint64
-	Annotations                               map[string]string
-	Session, Org, Repo                        string
+	Name, Image, Kind, Command      string
+	Ports                           []*easylabv1.PortSpec
+	Env                             map[string]string
+	Replicas                        int32
+	Group, Network, Namespace, CPUs string
+	MemoryBytes                     uint64
+	Annotations                     map[string]string
+	Session, Org, Repo              string
 }
 
 // LaunchServiceFull launches a service with the complete spec.
