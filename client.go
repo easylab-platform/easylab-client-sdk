@@ -41,6 +41,17 @@ type clientOptions struct {
 	httpClient *http.Client
 }
 
+// h2cTransport speaks cleartext HTTP/2 (prior knowledge) for http:// URLs
+// and TLS HTTP/2 (ALPN) for https:// URLs — one transport, HTTP/2 only.
+// The easylab gateway serves the Connect surface over HTTP/2, so this is
+// the default; WithHTTPClient overrides for legacy HTTP/1.1 endpoints.
+func h2cTransport() *http.Transport {
+	protocols := new(http.Protocols)
+	protocols.SetHTTP1(false)
+	protocols.SetUnencryptedHTTP2(true)
+	return &http.Transport{Protocols: protocols}
+}
+
 // WithHTTPClient overrides the underlying HTTP client (e.g. TLS config,
 // timeouts, proxy-aware transport, or an h2c client for an HTTP/2-only
 // endpoint).
@@ -55,15 +66,15 @@ func WithHTTPClient(client *http.Client) Option {
 // New builds an easylab client. token, when non-empty, is sent as Bearer.
 // baseURL is protocol+host (no trailing slash).
 //
-// The gateway speaks HTTP/1.1 over plain http:// (and TLS h1/h2 behind the
-// ingress), so the default http.DefaultClient fits; pass WithHTTPClient to
-// override. For DIRECT h2c calls to the agent backend use
-// github.com/abcp-sdk/agent-sdk instead.
+// The default transport speaks HTTP/2 only: cleartext prior-knowledge (h2c)
+// for http:// URLs, ALPN for https://. Pass WithHTTPClient to override
+// (e.g. for HTTP/1.1-only endpoints). For DIRECT calls to the agent
+// backend use github.com/abcp-sdk/agent-sdk instead.
 func New(baseURL, token string, opts ...Option) *Client {
 	if token == "" {
 		token = "devtoken"
 	}
-	o := clientOptions{httpClient: http.DefaultClient}
+	o := clientOptions{httpClient: &http.Client{Transport: h2cTransport()}}
 	for _, opt := range opts {
 		opt(&o)
 	}

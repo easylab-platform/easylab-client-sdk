@@ -77,6 +77,12 @@ func newGatewayTestServer(t *testing.T) (*httptest.Server, *recorder, *stubLab) 
 		rec.auth.Store(r.Header.Get("Authorization"))
 		mux.ServeHTTP(w, r)
 	}))
+	// Serve cleartext HTTP/2 (prior knowledge) + HTTP/1.1 on the same port,
+	// mirroring the easylab gateway's dual-stack listener.
+	protocols := new(http.Protocols)
+	protocols.SetHTTP1(true)
+	protocols.SetUnencryptedHTTP2(true)
+	srv.Config.Protocols = protocols
 	srv.Start()
 	t.Cleanup(srv.Close)
 	return srv, rec, lab
@@ -117,8 +123,8 @@ func TestGatewayRoundTrip(t *testing.T) {
 		t.Fatalf("sessions = %v", sessions.Msg.GetSessions())
 	}
 
-	if got := rec.proto.Load(); got != "HTTP/1.1" {
-		t.Fatalf("protocol = %v, want HTTP/1.1 (default client)", got)
+	if got := rec.proto.Load(); got != "HTTP/2.0" {
+		t.Fatalf("protocol = %v, want HTTP/2.0 (h2c default client)", got)
 	}
 	if got := rec.auth.Load(); got != "Bearer tok-9" {
 		t.Fatalf("authorization = %v, want Bearer tok-9", got)
