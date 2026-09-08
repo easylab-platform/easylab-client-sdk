@@ -5,7 +5,7 @@
 // from easylab/v1/easylab.proto) and AgentService (agent.v1, forwarded through
 // the gateway). ALL of them dial the SAME baseUrl (the easylab gateway); the
 // agent surface is the gateway's /agent.v1.* forward, NOT a direct agent call.
-// For direct-to-agent use (ext servers), see github.com/abcp-sdk/agent-sdk.
+// For direct-to-agent use (ext servers), see github.com/abcp-sdk/agent-sdk-go.
 //
 // This SDK adds Bearer auth + ergonomic wrappers so any consumer never
 // hard-codes REST paths.
@@ -69,7 +69,7 @@ func WithHTTPClient(client *http.Client) Option {
 // The default transport speaks HTTP/2 only: cleartext prior-knowledge (h2c)
 // for http:// URLs, ALPN for https://. Pass WithHTTPClient to override
 // (e.g. for HTTP/1.1-only endpoints). For DIRECT calls to the agent
-// backend use github.com/abcp-sdk/agent-sdk instead.
+// backend use github.com/abcp-sdk/agent-sdk-go instead.
 func New(baseURL, token string, opts ...Option) *Client {
 	if token == "" {
 		token = "devtoken"
