@@ -9,3 +9,5 @@ require (
 )
 
 require google.golang.org/protobuf v1.36.12 // indirect
+
+replace github.com/easylab-platform/easylab-proto => ../easylab-proto

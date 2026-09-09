@@ -27,11 +27,12 @@ import (
 
 // Client is a thin Easylab client exposing three typed service surfaces.
 type Client struct {
-	base     string
-	Lab      easylabv1connect.LabServiceClient
-	Ops      easylabv1connect.OpsServiceClient
-	Registry easylabv1connect.RegistryServiceClient
-	Agent    agentv1connect.AgentServiceClient // easylab gateway's /agent.v1 forward
+	base           string
+	Lab            easylabv1connect.LabServiceClient
+	Ops            easylabv1connect.OpsServiceClient
+	Registry       easylabv1connect.RegistryServiceClient
+	Agent          agentv1connect.AgentServiceClient // easylab gateway's /agent.v1 forward
+	SandboxService easylabv1connect.SandboxServiceClient
 }
 
 // Option customizes the client.
@@ -81,11 +82,12 @@ func New(baseURL, token string, opts ...Option) *Client {
 	inter := authInterceptor(token)
 	base := trimSlash(baseURL)
 	return &Client{
-		base:     base,
-		Lab:      easylabv1connect.NewLabServiceClient(o.httpClient, base, connect.WithInterceptors(inter)),
-		Ops:      easylabv1connect.NewOpsServiceClient(o.httpClient, base, connect.WithInterceptors(inter)),
-		Registry: easylabv1connect.NewRegistryServiceClient(o.httpClient, base, connect.WithInterceptors(inter)),
-		Agent:    agentv1connect.NewAgentServiceClient(o.httpClient, base, connect.WithInterceptors(inter)),
+		base:           base,
+		Lab:            easylabv1connect.NewLabServiceClient(o.httpClient, base, connect.WithInterceptors(inter)),
+		Ops:            easylabv1connect.NewOpsServiceClient(o.httpClient, base, connect.WithInterceptors(inter)),
+		Registry:       easylabv1connect.NewRegistryServiceClient(o.httpClient, base, connect.WithInterceptors(inter)),
+		Agent:          agentv1connect.NewAgentServiceClient(o.httpClient, base, connect.WithInterceptors(inter)),
+		SandboxService: easylabv1connect.NewSandboxServiceClient(o.httpClient, base, connect.WithInterceptors(inter)),
 	}
 }
 
