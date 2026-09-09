@@ -243,14 +243,6 @@ func (c *Client) Diff(ctx context.Context, org, repo, changeID, path string) ([]
 
 // ---- ops ----
 
-// Build triggers a container image build, returning the task id.
-func (c *Client) Build(ctx context.Context, req *easylabv1.BuildRequest) (string, error) {
-	res, err := c.Ops.Build(ctx, connect.NewRequest(req))
-	if err != nil {
-		return "", errDownstream("easylab", err)
-	}
-	return res.Msg.GetTaskId(), nil
-}
 
 // ListServices lists services/deployments.
 func (c *Client) ListServices(ctx context.Context, org, repo, namespace string) ([]*easylabv1.ServiceInfo, error) {
