@@ -33,6 +33,7 @@ type Client struct {
 	Registry       easylabv1connect.RegistryServiceClient
 	Agent          agentv1connect.AgentServiceClient // easylab gateway's /agent.v1 forward
 	SandboxService easylabv1connect.SandboxServiceClient
+	Workflow       easylabv1connect.WorkflowServiceClient
 }
 
 // Option customizes the client.
@@ -88,6 +89,7 @@ func New(baseURL, token string, opts ...Option) *Client {
 		Registry:       easylabv1connect.NewRegistryServiceClient(o.httpClient, base, connect.WithInterceptors(inter)),
 		Agent:          agentv1connect.NewAgentServiceClient(o.httpClient, base, connect.WithInterceptors(inter)),
 		SandboxService: easylabv1connect.NewSandboxServiceClient(o.httpClient, base, connect.WithInterceptors(inter)),
+		Workflow:       easylabv1connect.NewWorkflowServiceClient(o.httpClient, base, connect.WithInterceptors(inter)),
 	}
 }
 
@@ -220,7 +222,10 @@ func (c *Client) WriteBlob(ctx context.Context, org, repo, branch, path, content
 	if err != nil {
 		return false, errDownstream("easylab", err)
 	}
-	return res.Msg.GetOk(), errors.New(res.Msg.GetError())
+	if e := res.Msg.GetError(); e != "" {
+		return res.Msg.GetOk(), errors.New(e)
+	}
+	return res.Msg.GetOk(), nil
 }
 
 // Log lists commits for a repo at ref.
